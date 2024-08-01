@@ -1,6 +1,8 @@
 package com.kye.jnidemo2
 
 import android.Manifest
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.http.SslError
@@ -27,6 +29,7 @@ import dalvik.system.DexClassLoader
 import dalvik.system.DexFile
 import kotlinx.coroutines.selects.whileSelect
 import java.io.File
+import kotlin.time.measureTime
 
 
 class MainActivity : AppCompatActivity() {
@@ -160,9 +163,43 @@ class MainActivity : AppCompatActivity() {
         binding.disableOat.setOnClickListener {
             disableOat()
         }
+        binding.callFunc.setOnClickListener {
+
+            handleCallFunc()
+        }
+
+        binding.startAnimate.setOnClickListener {
+            ValueAnimator.ofInt(0, 500)
+                .apply {
+
+                    addUpdateListener {
+                        val value = it.animatedValue as Int
+
+                        binding.animateView.translationX = value.toFloat()
+                    }
+                    repeatCount = ObjectAnimator.INFINITE
+                    repeatMode = ObjectAnimator.REVERSE
+                    duration = 500
+                }.start()
+        }
 
         TestC().call()
         binding.sampleText.text = stringFromJNI()
+    }
+
+    private fun handleCallFunc() {
+        val spendTime = measureTime {
+
+            val count = 10000
+            var i = 0
+            while (i <= count) {
+                val a = i + count
+                Log.e(TAG, "onCreate: $a", )
+                i++
+            }
+        }
+
+        Log.e(TAG, "onCreate: spend_time:$spendTime", )
     }
 
     external fun disableVerify()

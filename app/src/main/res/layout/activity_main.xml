@@ -35,6 +35,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <Button
+        android:text="启动动画"
+        android:id="@+id/start_animate"
+        app:layout_constraintBottom_toTopOf="@+id/enable_oat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:text="高频调用函数"
+        android:id="@+id/call_func"
+        app:layout_constraintBottom_toTopOf="@+id/start_animate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
     <ProgressBar
         android:id="@+id/header_progressbar"
         android:layout_width="50dp"
@@ -53,5 +66,11 @@
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:background="#fff"/>
+
+    <View
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#f00"
+        android:id="@+id/animate_view"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
