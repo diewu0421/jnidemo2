@@ -15,20 +15,19 @@ bool (*Exec_origin) (std::vector<std::string> &arg_vector, std::string *error_ms
 
 bool Exec_proxy(std::vector<std::string> &arg_vector, std::string *error_msg) {
     LOGE("Exec_proxy args_length:%zu", arg_vector.size());
-
+    std::string resultStr("");
     for (const auto& arg : arg_vector) {
         LOGE("arg: %s", arg.c_str());
+        resultStr += arg;
+        resultStr += " ";
     }
+    LOGE("拼接后的参数为:%s", resultStr.c_str());
     if (arg_vector[0].find("dex2oat")) {
         LOGE("dex2oat直接拦截返回false");
         return false;
     }
-    bool result = Exec_origin(arg_vector, error_msg);
-    if (error_msg) {
-        LOGE("error_msg: %s", error_msg->c_str());
-    }
-    LOGE("Original function result: %d", result);
-    return result;
+
+    return Exec_origin(arg_vector, error_msg);
 }
 
 
@@ -37,22 +36,22 @@ void do_hook() {
     int security_patch = __system_property_get("ro.hmct.modem.version", value);
     free(value);
     LOGE("security_patch %d, %s", security_patch, value);
-    if (android_get_device_api_level())
+    if (android_get_device_api_level() <= 30) {
+        stub = shadowhook_hook_sym_name(
+                "libart.so",
+                "_ZN3art4ExecERNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEEPS7_",
+                (void *) Exec_proxy,
+                (void **) &Exec_origin
+        );
 
-    stub = shadowhook_hook_sym_name(
-            "libart.so",
-            "_ZN3art4ExecERNSt3__16vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEEPS7_",
-            (void *) Exec_proxy,
-            (void **) &Exec_origin
-    );
+        if (stub) {
+            LOGE("hook success111");
+        } else {
+            int err_num = shadowhook_get_errno();
 
-    if (stub) {
-        LOGE("hook success111");
-    } else {
-        int err_num = shadowhook_get_errno();
-
-        const char *err_msg = shadowhook_to_errmsg(err_num);
-        LOGE("hook error %d - %s", err_num, err_msg);
+            const char *err_msg = shadowhook_to_errmsg(err_num);
+            LOGE("hook error %d - %s", err_num, err_msg);
+        }
     }
 }
 
@@ -148,14 +147,14 @@ void isverify_proxy(void * self){
 
 
 void do_hook_verify() {
-    if (android_get_device_api_level())
 
-        stub = shadowhook_hook_sym_name(
-                "libart.so",
-                "_ZN3art7Runtime15DisableVerifierEv",
-                (void *) isverify_proxy,
-                (void **) &origin_isverify
-        );
+    LOGE("do_hook_verify");
+    stub = shadowhook_hook_sym_name(
+            "libart.so",
+            "_ZN3art7Runtime15DisableVerifierEv",
+            (void *) isverify_proxy,
+            (void **) &origin_isverify
+    );
     LOGE("origin %p", origin_isverify);
 
     if (stub) {
@@ -169,34 +168,35 @@ void do_hook_verify() {
 }
 
 
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_kye_jnidemo2_MainActivity_disableOat(JNIEnv *env, jobject thiz) {
-    JavaVM  *vm;
-    env->GetJavaVM(&vm);
-    do_hook_verify();
-
-    if (vm) {
-
-        JavaVmExt *javaVmExt = reinterpret_cast<JavaVmExt *>(vm);
-        if (javaVmExt->runtime) {
-            //  runtime
-//            javaVmExt->runtime
-            LOGE("runtime has %p", javaVmExt->runtime);
-            void** ptr = static_cast<void **>(javaVmExt->runtime);
-            if (origin_isverify) {
-                origin_isverify(javaVmExt->runtime);
-                LOGE("call disable");
-            }
-            for (int i =0 ;i<=100; i++) {
-                if (ptr[i] == javaVmExt) {
-                    LOGE("find1111111 %d %p, %p", i, ptr[i], javaVmExt);
-                }
-            }
-            LOGE("over ");
-        }
-    }
-//    do_hook();
+//    JavaVM  *vm;
+//    env->GetJavaVM(&vm);
+//    do_hook_verify();
+//
+//    if (vm) {
+//
+//        JavaVmExt *javaVmExt = reinterpret_cast<JavaVmExt *>(vm);
+//        if (javaVmExt->runtime) {
+//            //  runtime
+////            javaVmExt->runtime
+//            LOGE("runtime has %p", javaVmExt->runtime);
+//            void** ptr = static_cast<void **>(javaVmExt->runtime);
+//            if (origin_isverify) {
+//                origin_isverify(javaVmExt->runtime);
+//                LOGE("call disable");
+//            }
+//            for (int i =0 ;i<=100; i++) {
+//                if (ptr[i] == javaVmExt) {
+//                    LOGE("find1111111 %d %p, %p", i, ptr[i], javaVmExt);
+//                }
+//            }
+//            LOGE("over ");
+//        }
+//    }
+    do_hook();
 //    test_pthread();
 }
 

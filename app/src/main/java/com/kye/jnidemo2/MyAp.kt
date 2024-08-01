@@ -5,9 +5,10 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Trace
 import android.util.Log
-import androidx.core.os.trace
 import com.bytedance.shadowhook.ShadowHook
 import com.bytedance.shadowhook.ShadowHook.ConfigBuilder
+import dalvik.system.DexFile
+
 
 /**
  * bytedance
@@ -31,14 +32,12 @@ class MyAp: Application() {
             .getMethod("currentApplication")
             .invoke(null) as Application
 
-        Log.e(TAG, "attachBaseContext: this = ${hashCode()}, app = ${app.hashCode()}", )
-        Trace.beginSection("onCreate")
-        Trace.endSection()
+        Log.e(TAG, "attachBaseContext: this = ${hashCode()}, app = ${app.hashCode()}")
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        Log.e(TAG, "onConfigurationChanged: or :${newConfig.orientation}", )
+        Log.e(TAG, "onConfigurationChanged: or :${newConfig.orientation}")
     }
     external fun disableVerify()
 

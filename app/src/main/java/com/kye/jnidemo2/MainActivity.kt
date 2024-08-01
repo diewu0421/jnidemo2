@@ -24,6 +24,8 @@ import com.kye.jnidemo2.MyAp.Companion
 import com.kye.jnidemo2.databinding.ActivityMainBinding
 import com.kye.mylibrary.TestC
 import dalvik.system.DexClassLoader
+import dalvik.system.DexFile
+import kotlinx.coroutines.selects.whileSelect
 import java.io.File
 
 
@@ -104,13 +106,19 @@ class MainActivity : AppCompatActivity() {
             val pluginStream = applicationContext.assets.open("plugin1-debug.apk")
             plugin1ApkFile.writeBytes(pluginStream.readBytes())
         }
-
+        val dexFile = File(filesDir, "classes8.dex")
+        Log.e(TAG, "onCreate: dexFile exists:${dexFile.exists()}", )
+        if (!dexFile.exists()) {
+            val pluginStream = applicationContext.assets.open("classes8.dex")
+            dexFile.writeBytes(pluginStream.readBytes())
+        }
         binding.loadPlugin.setOnClickListener {
             Trace.beginSection("disableVerify")
             disableVerify()
-            Trace.endSection()
+            val startTime = System.currentTimeMillis()
+            
             val loader = DexClassLoader(
-                File(filesDir, "plugin1-debug.apk").also {
+                File(filesDir, "classes8.dex").also {
                     it.setReadable(true, false)
                     it.setWritable(false)
                 }.absolutePath,
@@ -122,10 +130,26 @@ class MainActivity : AppCompatActivity() {
                 null,
                 MainActivity::class.java.classLoader
             )
-            val clz = loader.loadClass("com.kye.plugin1.MainActivity")
-            Log.e(TAG, "onCreate: class :$clz", )
+//            val clz = loader.loadClass("com.tencent.wemeet.module.chat.activity.ChattingSettingActivity")
+//            Log.e(TAG, "onCreate: class :$clz", )
+            val dexFile = DexFile(File(filesDir, "classes8.dex"))
+            val entries = dexFile.entries()
+            while (entries.hasMoreElements()) {
+                val next = entries.nextElement()
 
+                kotlin.runCatching {
+                    loader.loadClass(next)
+//                    Class.forName(next)
+                }.onFailure {
+                    Log.e(TAG, "onCreate: fail:${it.message}", )
+                }
+                Log.e(TAG, "onCreate: next:$next", )
+            }
+
+            Log.e(TAG, "onCreate: load plugin over: ${System.currentTimeMillis() - startTime}", )
             Toast.makeText(this@MainActivity, "load plugin", Toast.LENGTH_SHORT).show()
+            Trace.endSection()
+
         }
 
         binding.enableOat.setOnClickListener {
@@ -134,23 +158,8 @@ class MainActivity : AppCompatActivity() {
 //            binding.webview.evaluateJavascript("javascript:console.log('Hello from Android')", null);
         }
         binding.disableOat.setOnClickListener {
-            val loader = DexClassLoader(
-                File(filesDir, "plugin1-debug.apk").also {
-                    it.setReadable(true, false)
-                    it.setWritable(false)
-                }.absolutePath,
-                File(filesDir, "opt").also {
-                    if (!it.exists()) {
-                        it.mkdirs()
-                    }
-                }.absolutePath,
-                null,
-                MainActivity::class.java.classLoader
-            )
-            val clz = loader.loadClass("com.kye.plugin1.MainActivity")
-            Log.e(TAG, "onCreate: verify_clz $clz", )
+            disableOat()
         }
-
 
         TestC().call()
         binding.sampleText.text = stringFromJNI()
