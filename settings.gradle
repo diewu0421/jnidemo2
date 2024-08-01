@@ -9,6 +9,12 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        mavenLocal()
+        maven { url 'https://jitpack.io' }
+        maven {
+            allowInsecureProtocol = true
+            url = 'http://nexus.ky-tech.com.cn:8081/repository/apk-aar/'
+        }
     }
 }
 dependencyResolutionManagement {
@@ -16,6 +22,12 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
+        maven { url 'https://jitpack.io' }
+        maven {
+            allowInsecureProtocol = true
+            url = 'http://nexus.ky-tech.com.cn:8081/repository/apk-aar/'
+        }
     }
 }
 
